@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View } from 'react-native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { GlobalContext } from '@components/ContextProvider';
@@ -106,6 +106,20 @@ export class JobsScreen extends React.Component<JobsScreenProps, JobsScreenState
     console.log(newJobs, availability);
 
     // Step 1: Remove jobs where the schedule doesn't align with the users' availability.
+    for (let i = 0; i < jobs.length; i ++) {
+      let jobDays = jobs[i].schedule; 
+      for (let j = 0; j < jobDays.length; j++) {
+        let day = jobDays[j];
+        if ((day=="Monday" && !availability.monday)
+        || (day=="Tuesday" && !availability.tuesday)
+        || (day=="Wednesday" && !availability.wednesday)
+        || (day=="Thursday" && !availability.thursday)
+        || (day=="Friday" && !availability.friday)){
+          delete newJobs[i];
+          continue;
+        }
+      }
+    }
 
     // Step 2: Save into state
     this.setState({ jobs: newJobs });
