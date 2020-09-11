@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View } from 'react-native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { GlobalContext } from '@components/ContextProvider';
@@ -13,6 +13,7 @@ import { StatusController } from '@screens/StatusScreen/StatusController';
 // BWBP
 import { Overlay, CheckBox, Button } from 'react-native-elements';
 import { cloneDeep } from 'lodash';
+import { Text } from '@components/BaseComponents';
 
 interface Availability {
   monday: boolean;
@@ -29,6 +30,7 @@ interface JobsScreenState {
   staticHeader: boolean;
   status: Status;
   availability: Availability;
+  visible: boolean;
 }
 
 interface JobsScreenProps {
@@ -60,10 +62,11 @@ export class JobsScreen extends React.Component<JobsScreenProps, JobsScreenState
       availability: {
         monday: false,
         tuesday: false,
-        wednesday: true,
-        thursday: true,
+        wednesday: false,
+        thursday: false,
         friday: false,
       },
+      visible: true,
     };
   }
 
@@ -101,13 +104,22 @@ export class JobsScreen extends React.Component<JobsScreenProps, JobsScreenState
    * TODO: Write filterJobs function that updates the components' state with jobs that align with the users' weekly schedule.
    */
   filterJobs = (jobs: JobRecord[], availability: Availability): void => {
-    // Step 0: Clone the jobs input
     const newJobs: JobRecord[] = cloneDeep(jobs);
     console.log(newJobs, availability);
-
-    // Step 1: Remove jobs where the schedule doesn't align with the users' availability.
-
-    // Step 2: Save into state
+    for (let i = 0; i < jobs.length; i ++) {
+      let jobDays = jobs[i].schedule; 
+      for (let j = 0; j < jobDays.length; j++) {
+        let day = jobDays[j];
+        if ((day=="Monday" && !availability.monday)
+        || (day=="Tuesday" && !availability.tuesday)
+        || (day=="Wednesday" && !availability.wednesday)
+        || (day=="Thursday" && !availability.thursday)
+        || (day=="Friday" && !availability.friday)){
+          delete newJobs[i];
+          continue;
+        }
+      }
+    }
     this.setState({ jobs: newJobs });
   };
 
@@ -145,7 +157,13 @@ export class JobsScreen extends React.Component<JobsScreenProps, JobsScreenState
           />
         }
       >
-        <View>
+      <Overlay isVisible= {this.state.visible}>
+        <Text style={{fontSize:20, textAlign:'center'}}> 
+          {'\n'}
+          Please enter your availability to find relevant job options:
+          {'\n'}
+        </Text>
+        <View style={{justifyContent: 'center'}}>
           <CheckBox
             title="Monday"
             checked={monday}
@@ -194,10 +212,25 @@ export class JobsScreen extends React.Component<JobsScreenProps, JobsScreenState
         </View>
         <View style={{ alignItems: 'center', marginVertical: 20 }}>
           <Button
-            title="Filter Search"
+            title="Apply Filter"
             containerStyle={{ width: '50%' }}
             onPress={(): void => {
               this.filterJobs(getJobs(), this.state.availability);
+              this.setState(prev => {
+                return {... prev, visible: false};
+              })
+            }}
+          />
+        </View>
+      </Overlay>
+      <View style={{ alignItems: 'center', marginVertical: 20 }}>
+          <Button
+            title="Set Availability"
+            containerStyle={{ width: '50%' }}
+            onPress={(): void => {
+              this.setState(prev => {
+                return {... prev, visible: true};
+              })
             }}
           />
         </View>
